@@ -1,6 +1,11 @@
 import { RiH5, RiLockPasswordLine } from "react-icons/ri";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useEffect, useState } from "react";
+import { MdContentCopy, MdDeleteOutline } from "react-icons/md";
+import { IoIosCloudDone } from "react-icons/io";
+import { Bounce, ToastContainer, toast } from 'react-toastify';
+import { CiEdit } from "react-icons/ci";
+import { v4 as uuidv4 } from 'uuid';
 
 const Manager = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -30,7 +35,7 @@ const Manager = () => {
       return;
     }
 
-    const newEntry = { ...formData, date: formattedDate };
+    const newEntry = { ...formData, date: formattedDate, id: uuidv4() };
     const updatedPasswords = [...passwordArray, newEntry];
 
     setPasswordArray(updatedPasswords);
@@ -40,6 +45,49 @@ const Manager = () => {
     setFormData({ website: "", username: "", password: "" });
   };
 
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text)
+
+    toast.success('Copied to clipboard', {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "dark",
+      transition: Bounce,
+      });
+  }
+
+  const editPassword = (id) => {
+    console.log(id);
+    setFormData(passwordArray.filter(i => i.id === id)[0])
+    console.log(formData);
+    setPasswordArray(passwordArray.filter(item => item.id !== id))
+  }
+
+  const deletePassword = (id) => {
+    const c = confirm("Do you really want to delete this field?")
+
+    if(c) {
+      toast.success('Field deleted', {
+        position: "top-center",
+        autoClose: 2500,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+        transition: Bounce,
+        });
+      setPasswordArray(passwordArray.filter(item => item.id!== id))
+      localStorage.setItem("passwords", JSON.stringify(passwordArray.filter(item => item.id !== id)))
+    }
+  }
+ 
 
   useEffect(() => {
     const passwords = localStorage.getItem("passwords")
@@ -50,6 +98,20 @@ const Manager = () => {
 
   return (
     <div>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick={false}
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="dark"
+        transition={Bounce}
+      />
 
       <div className="absolute inset-0 -z-10 h-full w-full items-center px-5 py-24 [background:radial-gradient(125%_125%_at_50%_10%,#000_40%,#00f_100%)]"></div>
 
@@ -106,24 +168,45 @@ const Manager = () => {
       <div className="password-show-fields mt-8">
         <h2 className="text-2xl">Saved Passwords</h2>
         {passwordArray.length === 0 && <h5>No saved passwrds</h5>}
-        {passwordArray.length != 0 && <table className="table-auto w-full rounded-lg overflow-hidden">
+        {passwordArray.length != 0 && <table className="table-auto w-full rounded-lg overflow-hidden mt-4">
           <thead className="bg-zinc-500">
             <tr>
-              <th>Wesbite</th>
+              <th>Website</th>
               <th>Username</th>
               <th>Password</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody className="bg-blue-700">
             {passwordArray.map((item, index) => {
               return (
                 <tr key={index}>
-                  <td className="text-center w-32">{item.wesbite}</td>
-                  <td className="text-center w-32">{item.wesbite}</td>
-                  <td className="text-center w-32">{item.wesbite}</td>
-                  <td className="text-center w-32">{item.wesbite}</td>
-                  <td x className="text-center w-32">{item.wesbite}</td>
+                  <td className="w-[25%] text-center py-2">
+                    <div className="flex items-center justify-center">
+                      <h5 className="w-[50%]">{item.website}</h5>
+                      <MdContentCopy onClick={() => copyToClipboard(item.website)} className="cursor-pointer" />
+                    </div>
+                  </td>
+                  <td className="w-[25%] text-center py-2">
+                    <div className="flex items-center justify-center">
+                      <h5 className="w-[50%]">{item.username}</h5>
+                      <MdContentCopy onClick={() => copyToClipboard(item.username)} className="cursor-pointer" />
+                    </div>
+                  </td>
+                  <td className="w-[25%] text-center py-2">
+                    <div className="flex items-center justify-center">
+                      <h5 className="w-[50%]">{item.password}</h5>
+                      <MdContentCopy onClick={() => copyToClipboard(item.password)} className="cursor-pointer" />
+                    </div>
+                  </td>
+                  <td className="w-[25%] text-center py-2">
+                    <div className="flex items-center justify-center gap-4">
+                      <CiEdit onClick={() => editPassword(item.id)} size={22} className="cursor-pointer" />
+                      <MdDeleteOutline onClick={() => deletePassword(item.id)} size={22} className="cursor-pointer" />
+                    </div>
+                  </td>
                 </tr>
+
               )
             })}
 
